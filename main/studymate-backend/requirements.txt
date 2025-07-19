@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-multipart
+python-dotenv
+pymongo
+google-cloud-storage
+google-cloud-texttospeech
+google-generativeai
+pdfplumber
+firebase-admin
