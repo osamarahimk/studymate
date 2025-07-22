@@ -11,6 +11,10 @@ function App() {
   return (
     <Router>
       <Navbar /> {/* Place Navbar here to appear on all pages */}
+       {/* Add a simple test element with Tailwind classes */}
+      <div className="bg-blue-200 p-4 text-center text-xl font-bold text-blue-800">
+        StudyMate App
+      </div>
       <Routes>
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/" element={<ProtectedRoute />}>
