@@ -108,4 +108,37 @@ export const getQuestions = async (storagePath) => {
   });
 };
 
+// src/services/api.js (add this function)
+
+// ... existing imports and functions ...
+
+export const listDocuments = async () => {
+  return await authenticatedFetch("/documents", {
+    method: "GET"
+  });
+};
+// src/services/api.js (add this function)
+
+// ... existing imports and functions ...
+
+export const textToSpeech = async (text) => {
+  try {
+    const response = await authenticatedFetch("/ai/text-to-speech", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text: text }),
+    });
+
+    // textToSpeech returns an audio stream/blob
+    // We need to get it as a Blob
+    const audioBlob = await response.blob();
+    return audioBlob; // Return the blob directly
+  } catch (error) {
+    console.error("Text-to-Speech API call failed:", error);
+    throw error;
+  }
+};
+
 // Add more API functions as needed for your backend endpoints
