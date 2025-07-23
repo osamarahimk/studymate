@@ -10,6 +10,7 @@ from google.cloud import storage
 import os
 import io
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv() # Load environment variables from .env
 
@@ -78,7 +79,7 @@ async def upload_document(
         raise HTTPException(status_code=500, detail=f"Failed to upload document: {e}")
 
 # Endpoint to list documents
-@app.get("/documents")
+@app.get("/documents/list")
 async def list_documents(user: dict = Depends(verify_firebase_token)):
     user_id = user["uid"]
     documents = list(get_documents_collection().find({"user_id": user_id}, {"_id": 0})) # Exclude MongoDB _id
