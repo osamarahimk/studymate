@@ -1,144 +1,136 @@
 // src/services/api.js
 
-import { auth } from '../firebase'; // Import the Firebase auth object
+const BASE_API_URL = "https://studymate-backend-186625748163.us-central1.run.app/"; // REPLACE WITH YOUR ACTUAL CLOUD RUN URL
 
-// Replace with the actual URL of your deployed Cloud Run service
-const BASE_API_URL = "https://studymate-backend-186625748163.us-central1.run.app/"; // e.g., "https://studymate-backend-xxxxxx-uc.a.run.app"
-
-/**
- * Helper function to retrieve the Firebase ID token for the current user.
- * This should be called before making any authenticated requests.
- * It leverages the Firebase SDK's automatic token refreshing.
- */
-const getFirebaseIdToken = async () => {
+// Function to get the authorization header with Firebase ID token
+const getAuthHeader = async () => {
   const user = auth.currentUser;
-  if (user) {
-    try {
-      // getIdToken(true) forces a refresh of the token, useful for longer sessions,
-      // though typically just getIdToken() is sufficient as it refreshes implicitly.
-      return await user.getIdToken();
-    } catch (error) {
-      console.error("Error getting Firebase ID token:", error);
-      // Handle token retrieval errors (e.g., user signed out, network issues)
-      return null;
-    }
+  if (!user) {
+    throw new Error("User not authenticated.");
   }
-  return null; // No user logged in
+  const idToken = await user.getIdToken();
+  return {
+    'Authorization': `Bearer ${idToken}`,
+    'Content-Type': 'application/json'
+  };
 };
 
-/**
- * Generic helper to make authenticated API requests.
- * This function wraps the fetch API and adds the Authorization header.
- * You can customize it further for error handling, loading states, etc.
- */
-const authenticatedFetch = async (endpoint, options = {}) => {
-  const token = await getFirebaseIdToken();
+// --- Document Endpoints ---
 
-  if (!token) {
-    // Handle unauthenticated state (e.g., redirect to login)
-    console.warn("Attempted to make authenticated API call without a token. Redirecting or showing error.");
-    // Example: You might throw an error or redirect
-    throw new Error("User not authenticated. Please log in.");
-  }
+// 1. Upload Document
+const uploadDocument = async (formData) => { // formData should contain 'file' and 'document_name'
+  const headers = await getAuthHeader();
+  // Remove Content-Type from headers as it's set automatically by fetch for FormData
+  delete headers['Content-Type'];
 
-  const headers = {
-    ...options.headers, // Merge any existing headers
-    'Authorization': `Bearer ${token}`, // Add the Firebase ID token
-    // 'Content-Type': 'application/json', // Add this if most of your requests are JSON, or set it per request
-  };
-
-  const response = await fetch(`${BASE_API_URL}${endpoint}`, {
-    ...options,
-    headers,
+  const response = await fetch(`${BASE_API_URL}/documents/upload`, {
+    method: 'POST',
+    headers: {
+      'Authorization': headers['Authorization']
+    },
+    body: formData,
   });
 
   if (!response.ok) {
-    // Basic error handling
-    const errorData = await response.json().catch(() => ({ message: response.statusText }));
-    throw new Error(errorData.detail || errorData.message || `API Error: ${response.status}`);
+    const errorData = await response.json();
+    throw new Error(errorData.detail || 'Failed to upload document');
   }
-
-  return response.json(); // Assuming JSON response
+  return response.json();
 };
 
-// --- Your specific API functions using the authenticatedFetch helper ---
-
-export const uploadDocument = async (file, title, subject, topic) => {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("title", title);
-  formData.append("subject", subject);
-  formData.append("topic", topic);
-
-  return authenticatedFetch("/documents/upload", {
-    method: "POST",
-    body: formData,
-    // Note: 'Content-Type' header for FormData is usually handled automatically by fetch/browser
-    // when you provide a FormData object, so you typically don't set it manually here.
+// 2. List Documents
+const listDocuments = async () => {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_API_URL}/documents/list`, {
+    method: 'GET',
+    headers: headers,
   });
-};
 
-export const getSummary = async (storagePath) => {
-  return authenticatedFetch("/ai/summarize", {
-    method: "POST",
-    headers: {
-      'Content-Type': 'application/json', // Specify JSON content type for this request
-    },
-    body: JSON.stringify({ storage_path: storagePath }),
-  });
-};
-
-export const explainDocument = async (storagePath) => {
-  return authenticatedFetch("/ai/explain", {
-    method: "POST",
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ storage_path: storagePath }),
-  });
-};
-
-export const getQuestions = async (storagePath) => {
-  return authenticatedFetch("/ai/questions", {
-    method: "POST",
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ storage_path: storagePath }),
-  });
-};
-
-// src/services/api.js (add this function)
-
-// ... existing imports and functions ...
-
-export const listDocuments = async () => {
-  return await authenticatedFetch("/documents", {
-    method: "GET"
-  });
-};
-// src/services/api.js (add this function)
-
-// ... existing imports and functions ...
-
-export const textToSpeech = async (text) => {
-  try {
-    const response = await authenticatedFetch("/ai/text-to-speech", {
-      method: "POST",
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text: text }),
-    });
-
-    // textToSpeech returns an audio stream/blob
-    // We need to get it as a Blob
-    const audioBlob = await response.blob();
-    return audioBlob; // Return the blob directly
-  } catch (error) {
-    console.error("Text-to-Speech API call failed:", error);
-    throw error;
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || 'Failed to fetch documents');
   }
+  return response.json();
 };
 
-// Add more API functions as needed for your backend endpoints
+// 3. Get Document Content (assuming your backend has this)
+const getDocumentContent = async (documentId) => {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_API_URL}/documents/${documentId}/content`, {
+    method: 'GET',
+    headers: headers,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || 'Failed to fetch document content');
+  }
+  return response.json(); // Assuming content is returned as JSON {content: "text"}
+};
+
+// --- AI Endpoints ---
+
+// 1. Generate Summary
+const generateSummary = async (documentId) => {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_API_URL}/ai/summarize`, {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify({ document_id: documentId }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || 'Failed to generate summary');
+  }
+  return response.json();
+};
+
+// 2. Text-to-Speech
+const textToSpeech = async (text) => {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_API_URL}/ai/text-to-speech`, {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify({ text: text }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || 'Failed to convert text to speech');
+  }
+  // Assuming backend returns a direct audio file or a URL to it
+  // For simplicity, let's assume it returns a blob or an audio URL in JSON
+  const audioBlob = await response.blob();
+  return URL.createObjectURL(audioBlob); // Returns a URL to play the audio
+};
+
+
+// 3. Document QA (Ask a question about a document)
+const askDocumentQuestion = async (documentId, question) => {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_API_URL}/ai/ask-document`, {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify({ document_id: documentId, question: question }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || 'Failed to get answer');
+  }
+  return response.json();
+};
+
+
+export {
+  uploadDocument,
+  listDocuments,
+  getDocumentContent,
+  generateSummary,
+  textToSpeech,
+  askDocumentQuestion
+};
+
+// Remember to import 'auth' from your firebase.js
+import { auth } from '../firebase';

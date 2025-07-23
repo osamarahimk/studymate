@@ -1,36 +1,45 @@
 // src/App.js
 
-import './index.css';
+import './index.css'; // Make sure your main CSS is imported (where Tailwind directives are)
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
+// Import your pages and components
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
-import ProtectedRoute from './components/ProtectedRoute'; // Import ProtectedRoute
-import Navbar from './components/Navbar'; // Import Navbar (optional but good for navigation)
+import ProtectedRoute from './components/ProtectedRoute';
+import Navbar from './components/Navbar';
 
 function App() {
   return (
     <Router>
-      <Navbar /> {/* Place Navbar here to appear on all pages */}
-       {/* Add a simple test element with Tailwind classes */}
-      <div className="bg-blue-200 p-4 text-center text-xl font-bold text-blue-800">
-        StudyMate App
+      <Navbar /> {/* Navbar outside of Routes, so it appears on all pages */}
+
+      {/* Optional: Add a simple test element with Tailwind classes to verify setup */}
+      <div className="bg-purple-200 p-2 text-center text-lg font-semibold text-purple-800">
+        StudyMate App is Running!
       </div>
+
       <Routes>
+        {/* Public route for authentication */}
         <Route path="/auth" element={<AuthPage />} />
+
+        {/* Protected routes wrapped by ProtectedRoute */}
+        {/* If user is logged in, these routes will render. Otherwise, they'll redirect to /auth */}
         <Route path="/" element={<ProtectedRoute />}>
-          {/* Protected Routes go inside ProtectedRoute */}
           <Route index element={<DashboardPage />} /> {/* Default route after login */}
           <Route path="dashboard" element={<DashboardPage />} />
           {/* Add other protected routes here in future phases, e.g.,
-          <Route path="study-rooms" element={<StudyRoomsPage />} />
-          <Route path="document/:id" element={<DocumentDetailPage />} />
+          <Route path="documents/:id" element={<DocumentDetailPage />} />
           */}
         </Route>
-        {/* Fallback for undefined routes */}
+
+        {/* Fallback route for any undefined paths */}
         <Route path="*" element={
-          <div className="flex items-center justify-center min-h-screen bg-gray-100">
-            <h1 className="text-3xl text-gray-700">404 - Page Not Found</h1>
+          <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+            <h1 className="text-4xl font-bold text-gray-700 mb-4">404 - Page Not Found</h1>
+            <p className="text-lg text-gray-600">The page you're looking for doesn't exist.</p>
+            <Link to="/" className="mt-6 text-blue-600 hover:underline text-lg">Go to Home</Link>
           </div>
         } />
       </Routes>
