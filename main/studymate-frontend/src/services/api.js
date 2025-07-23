@@ -1,6 +1,6 @@
 // src/services/api.js
 
-const BASE_API_URL = "https://studymate-backend-186625748163.us-central1.run.app/"; // REPLACE WITH YOUR ACTUAL CLOUD RUN URL
+const BASE_API_URL = "https://studymate-backend-186625748163.us-central1.run.app"; // REPLACE WITH YOUR ACTUAL CLOUD RUN URL
 
 // Function to get the authorization header with Firebase ID token
 const getAuthHeader = async () => {
