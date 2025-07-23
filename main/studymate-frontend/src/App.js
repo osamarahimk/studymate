@@ -2,13 +2,14 @@
 
 import './index.css'; // Make sure your main CSS is imported (where Tailwind directives are)
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+// Now 'Link' is correctly imported and can be used.
 
 // Import your pages and components
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
 import ProtectedRoute from './components/ProtectedRoute';
-import Navbar from './components/Navbar';
+import Navbar from './components/NavBar';
 
 function App() {
   return (
